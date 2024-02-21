@@ -6,6 +6,7 @@ This repo is the ComfyUI nodes for Bedrock service. You could invoke the foundat
 ## Installation
 Clone this repository to your ComfyUI `custom_nodes` directory:
 ``` bash
+pip install boto3
 cd ComfyUI/custom_nodes
 git clone https://github.com/yytdfc/ComfyUI-Bedrock.git
 ```
@@ -14,7 +15,7 @@ git clone https://github.com/yytdfc/ComfyUI-Bedrock.git
 ## Example
 
 For example, you could use the Bedrock LLM to refine the prompt input and get a better result. Here is an example of doing prompt translation and refinement, and the invoke the image generation model (eg. SDXL, TitanImage) provided by Bedrock.
-The result is much better after preprocessing of prompt compared to the original SDXL model (bottom output), which doesn't have the capability of understanding Chinese. Workflow examples are in `./workflows`.
+The result is much better after preprocessing of prompt compared to the original SDXL model (the bottom output), which doesn't have the capability of understanding Chinese. Workflow examples are in `./workflows`.
 ![](./assets/example.webp)
 
 
