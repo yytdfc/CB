@@ -26,20 +26,21 @@ git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git
 - IAM Role
 
 If you are runing ComfyUI on your aws instance, you could use IAM role to control the policy to access to Bedrock service without AKSK configuration.
+
 Open the IAM role console of your running instance, and attach `AmazonBedrockFullAccess` policy to your role.
 
 Alternatively, you can create an inline policy to your role like this:
 
 ``` json
 {
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Effect": "Allow",
-			"Action": "bedrock:*",
-			"Resource": "*"
-		}
-	]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "bedrock:*",
+            "Resource": "*"
+        }
+    ]
 }
 ```
 
