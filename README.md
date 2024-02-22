@@ -3,7 +3,20 @@
 [__*Amazon Bedrock*__](https://aws.amazon.com/bedrock/) is a fully managed service that offers a choice of high-performing foundation models (FMs) from leading AI companies.
 This repo is the ComfyUI nodes for Bedrock service. You can invoke foundation models in your ComfyUI pipeline.
 
-## Installation
+## Installation (SageMaker by CloudFormation)
+
+Using [__*Amazon SageMaker*__](https://aws.amazon.com/sagemaker/) is the easiest way to develop your AI model. You can deploy a ComfyUI on SageMaker notebook using CloudFormation.
+
+1. Open [CloudFormation](https://console.aws.amazon.com/cloudformation/home#/stacks/create), and upload [`./assets/comfyui_on_sagemaker.yaml`](https://raw.githubusercontent.com/yytdfc/ComfyUI-Bedrock/main/assets/comfyui_on_sagemaker.yaml) by "Upload a template file".
+
+2. Next enter a stack name, choose a instance type fits for you.  Just next and next and submit.
+
+3. Wait for a moment, and you will find the ComfyUI url is ready for you. Enjoy!
+
+![](./assets/stack_complete.webp)
+
+
+## Installation (Manually)
 1. Clone this repository to your ComfyUI `custom_nodes` directory:
 
 ``` bash
