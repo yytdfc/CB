@@ -68,7 +68,7 @@ You may also want to add a default region to the AWS configuration file, which i
 region=us-east-1
 ```
 
-If you haven't set the default region and running on aws instance, this nodes will automatically use the same region to current instance.
+If you haven't set the default region and running on aws instance, this nodes will automatically use the same region as the running instance.
 
 
 ## Example
