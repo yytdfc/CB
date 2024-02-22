@@ -1,23 +1,40 @@
 import json
 import os
-import random
-import time
 import re
 import base64
 from io import BytesIO
 
+import requests
 from PIL import Image
 import numpy as np
 import torch
 
 import boto3
 
-os.environ["HTTP_PROXY"] = ""
-os.environ["ALL_PROXY"] = ""
 
 MAX_RETRY = 3
 
-bedrock_runtime_client = boto3.client(service_name='bedrock-runtime')
+
+
+def get_client():
+    try:
+        return boto3.client(service_name='bedrock-runtime')
+    except Exception as e:
+
+        # get region from gateway
+        response = requests.put('http://169.254.169.254/latest/api/token', headers={
+            'X-aws-ec2-metadata-token-ttl-seconds': '21600',
+        })
+        token = response.text
+        response = requests.get('http://169.254.169.254/latest/meta-data/placement/region', headers={
+            'X-aws-ec2-metadata-token': token,
+        })
+        
+        boto3.setup_default_session(region_name=response.text)
+        return boto3.client(service_name='bedrock-runtime')
+
+
+bedrock_runtime_client = get_client()
 
 
 class BedrockClaude:
@@ -89,7 +106,7 @@ class BedrockClaude:
         else:
             enclosed_prompt = prompt
 
-        for _ in range(MAX_RETRY):
+        for retry in range(MAX_RETRY):
             try:
                 # The different model providers have individual request and response formats.
                 # For the format, ranges, and default values for Anthropic Claude, refer to:
@@ -116,9 +133,8 @@ class BedrockClaude:
                 return (completion, )
 
             except Exception as e:
-                print(e)
-        else:
-            raise RuntimeError("Couldn't invoke Anthropic Claude")
+                if retry == MAX_RETRY - 1:
+                    raise RuntimeError(f"Couldn't invoke Bedrock model: {e}")
 
 
 class BedrockTitanImage:
@@ -200,7 +216,7 @@ class BedrockTitanImage:
 
         height, width = map(int, re.findall(r'\d+', resolution))
 
-        for _ in range(MAX_RETRY):
+        for retry in range(MAX_RETRY):
             try:
                 # The different model providers have individual request and response formats.
                 # For the format, ranges, and default values for Titan Image models refer to:
@@ -239,9 +255,8 @@ class BedrockTitanImage:
                 return (images,)
 
             except Exception as e:
-                print(e)
-        else:
-            raise RuntimeError("Couldn't invoke Anthropic Claude")
+                if retry == MAX_RETRY - 1:
+                    raise RuntimeError(f"Couldn't invoke Bedrock model: {e}")
 
 
 class BedrockSDXL:
@@ -323,7 +338,7 @@ class BedrockSDXL:
         height, width = map(int, re.findall(r'\d+', resolution))
         print(steps, height, width, cfg_scale, clip_guidance_preset, seed, style_preset, sampler)
 
-        for _ in range(MAX_RETRY):
+        for retry in range(MAX_RETRY):
             try:
                 # The different model providers have individual request and response formats.
                 # For the format, ranges, and available style_presets of Stable Diffusion models refer to:
@@ -360,9 +375,8 @@ class BedrockSDXL:
                 return (images,)
 
             except Exception as e:
-                print(e)
-        else:
-            raise RuntimeError("Couldn't invoke Anthropic Claude")
+                if retry == MAX_RETRY - 1:
+                    raise RuntimeError(f"Couldn't invoke Bedrock model: {e}")
 
 
 NODE_CLASS_MAPPINGS = {
