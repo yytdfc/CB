@@ -1,7 +1,7 @@
 # Amazon Bedrock nodes for ComfyUI
 
-Amazon Bedrock is a fully managed service that offers a choice of high-performing foundation models (FMs) from leading AI companies.
-This repo is the ComfyUI nodes for Bedrock service. You could invoke the foundation model in your ComfyUI pipeline.
+[__*Amazon Bedrock*__](https://aws.amazon.com/bedrock/) is a fully managed service that offers a choice of high-performing foundation models (FMs) from leading AI companies.
+This repo is the ComfyUI nodes for Bedrock service. You could invoke foundation models in your ComfyUI pipeline.
 
 ## Installation
 Clone this repository to your ComfyUI `custom_nodes` directory:
@@ -14,8 +14,8 @@ git clone https://github.com/yytdfc/ComfyUI-Bedrock.git
 
 ## Example
 
-For example, you could use the Bedrock LLM to refine the prompt input and get a better result. Here is an example of doing prompt translation and refinement, and the invoke the image generation model (eg. SDXL, TitanImage) provided by Bedrock.
-The result is much better after preprocessing of prompt compared to the original SDXL model (the bottom output), which doesn't have the capability of understanding Chinese. Workflow examples are in `./workflows`.
+For example, you could use the Bedrock LLM to refine the prompt input and get a better result. Here is an example of doing prompt translation and refinement, and the invoke the image generation model (eg. SDXL, Titan Image) provided by Bedrock.
+The result is much better after preprocessing of prompt compared to the original SDXL model (the bottom output in figure) which doesn't have the capability of understanding Chinese. Workflow examples are in `./workflows`.
 ![](./assets/example.webp)
 
 
@@ -41,4 +41,3 @@ Here are models ready for use, more models are coming soon.
         - [x] text to image
         - [ ] image to image
         - [ ] image to image (masking)
-
