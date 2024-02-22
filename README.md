@@ -29,8 +29,16 @@ Here are models ready for use, more models are coming soon.
     - [x] Claude Instant (1.x)
 
 - Amazon:
-    - [x] Titan Image Generator G1 (1.x)
+    - Titan Image Generator G1 (1.x)
+        - [x] text to image
+        - [ ] inpainting
+        - [ ] outpainting
+        - [ ] image variation
+
 
 - Stability AI:
-    - [x] Stable Diffusion XL (1.0)
+    - Stable Diffusion XL (1.0)
+        - [x] text to image
+        - [ ] image to image
+        - [ ] image to image (masking)
 
