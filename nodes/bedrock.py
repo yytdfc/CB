@@ -249,9 +249,13 @@ class BedrockTitanImage:
                     for base64_image in response_body.get("images")
                 ]
                 images = [
-                    torch.from_numpy(np.array(image).astype(np.float32) / 255.0)
+                    torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
                     for image in images
                 ]
+                if len(images) == 1:
+                    images = images[0]
+                else:
+                    images = torch.cat(images, 0)
                 return (images,)
 
             except Exception as e:
@@ -323,9 +327,6 @@ class BedrockSDXL:
                     "round": 1, #The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
                     "display": "number"
                 }),
-                        
-
-
             }
         }
     
@@ -336,7 +337,6 @@ class BedrockSDXL:
     def forward(self, prompt, resolution, style_preset, cfg_scale, steps, clip_guidance_preset, sampler, seed):
 
         height, width = map(int, re.findall(r'\d+', resolution))
-        print(steps, height, width, cfg_scale, clip_guidance_preset, seed, style_preset, sampler)
 
         for retry in range(MAX_RETRY):
             try:
@@ -369,9 +369,13 @@ class BedrockSDXL:
                     for base64_image in response_body.get("artifacts")
                 ]
                 images = [
-                    torch.from_numpy(np.array(image).astype(np.float32) / 255.0)
+                    torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
                     for image in images
                 ]
+                if len(images) == 1:
+                    images = images[0]
+                else:
+                    images = torch.cat(images, 0)
                 return (images,)
 
             except Exception as e:
