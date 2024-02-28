@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 here = Path(__file__).parent.resolve()
-sys.path.append(str(Path(here, "src")))
+#  sys.path.append(str(Path(here, "nodes")))
 import traceback
 import importlib
 
@@ -12,18 +12,16 @@ def load_nodes():
     node_display_name_mappings = {}
 
     for filename in (here / "nodes").iterdir():
-
+        if filename.suffix != ".py":
+            continue
         module_name = filename.stem
         try:
             module = importlib.import_module(
                 f".nodes.{module_name}", package=__package__
             )
             node_class_mappings.update(getattr(module, "NODE_CLASS_MAPPINGS"))
-            print(node_display_name_mappings)
             if hasattr(module, "NODE_DISPLAY_NAME_MAPPINGS"):
                 node_display_name_mappings.update(getattr(module, "NODE_DISPLAY_NAME_MAPPINGS"))
-
-            print(f"Imported {module_name} nodes")
 
         except AttributeError:
             pass  # wip nodes
@@ -44,4 +42,4 @@ def load_nodes():
     return node_class_mappings, node_display_name_mappings
 
 NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS = load_nodes()
-print("NODE_CLASS_MAPPINGS", NODE_CLASS_MAPPINGS)
+print("ComfyUI-Bedrock loaded:\n  ", list(NODE_CLASS_MAPPINGS.keys()))

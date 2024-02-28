@@ -5,36 +5,18 @@ import base64
 from io import BytesIO
 
 import requests
+from retry import retry
+
 from PIL import Image
 import numpy as np
 import torch
 
-import boto3
-
+from .session import get_client
 
 MAX_RETRY = 3
 
 
-
-def get_client():
-    try:
-        return boto3.client(service_name='bedrock-runtime')
-    except Exception as e:
-
-        # get region from gateway
-        response = requests.put('http://169.254.169.254/latest/api/token', headers={
-            'X-aws-ec2-metadata-token-ttl-seconds': '21600',
-        })
-        token = response.text
-        response = requests.get('http://169.254.169.254/latest/meta-data/placement/region', headers={
-            'X-aws-ec2-metadata-token': token,
-        })
-        
-        boto3.setup_default_session(region_name=response.text)
-        return boto3.client(service_name='bedrock-runtime')
-
-
-bedrock_runtime_client = get_client()
+bedrock_runtime_client = get_client(service_name='bedrock-runtime')
 
 
 class BedrockClaude:
@@ -91,6 +73,7 @@ class BedrockClaude:
     FUNCTION = "forward"
     CATEGORY = "aws"
 
+    @retry(tries=MAX_RETRY)
     def forward(self, prompt, is_raw_prompt, model_id, max_tokens_to_sample, temperature, top_p, top_k):
         """
         Invokes the Anthropic Claude 2 model to run an inference using the input
@@ -106,35 +89,29 @@ class BedrockClaude:
         else:
             enclosed_prompt = prompt
 
-        for retry in range(MAX_RETRY):
-            try:
-                # The different model providers have individual request and response formats.
-                # For the format, ranges, and default values for Anthropic Claude, refer to:
-                # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-claude.html
+        # The different model providers have individual request and response formats.
+        # For the format, ranges, and default values for Anthropic Claude, refer to:
+        # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-claude.html
 
-                # Claude requires you to enclose the prompt as follows:
+        # Claude requires you to enclose the prompt as follows:
 
-                body = {
-                    "prompt": enclosed_prompt,
-                    "max_tokens_to_sample": max_tokens_to_sample,
-                    "temperature": temperature,
-                    "top_p": top_p,
-                    "top_k": top_k,
-                    # "stop_sequences": ["\n\nHuman:"],
-                }
+        body = {
+            "prompt": enclosed_prompt,
+            "max_tokens_to_sample": max_tokens_to_sample,
+            "temperature": temperature,
+            "top_p": top_p,
+            "top_k": top_k,
+            # "stop_sequences": ["\n\nHuman:"],
+        }
 
-                response = bedrock_runtime_client.invoke_model(
-                    modelId=model_id, body=json.dumps(body, ensure_ascii=False)
-                )
+        response = bedrock_runtime_client.invoke_model(
+            modelId=model_id, body=json.dumps(body, ensure_ascii=False)
+        )
 
-                response_body = json.loads(response["body"].read())
-                completion = response_body["completion"]
+        response_body = json.loads(response["body"].read())
+        completion = response_body["completion"]
 
-                return (completion, )
-
-            except Exception as e:
-                if retry == MAX_RETRY - 1:
-                    raise RuntimeError(f"Couldn't invoke Bedrock model: {e}")
+        return (completion, )
 
 
 class BedrockTitanImage:
@@ -205,6 +182,7 @@ class BedrockTitanImage:
     FUNCTION = "forward"
     CATEGORY = "aws"
 
+    @retry(tries=MAX_RETRY)
     def forward(self, prompt, num_images, quality, resolution, cfg_scale, seed):
         """
         Invokes the Titan Image model to create an image using the input provided in the request body.
@@ -216,51 +194,45 @@ class BedrockTitanImage:
 
         height, width = map(int, re.findall(r'\d+', resolution))
 
-        for retry in range(MAX_RETRY):
-            try:
-                # The different model providers have individual request and response formats.
-                # For the format, ranges, and default values for Titan Image models refer to:
-                # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-titan-image.html
+        # The different model providers have individual request and response formats.
+        # For the format, ranges, and default values for Titan Image models refer to:
+        # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-titan-image.html
 
-                request = json.dumps(
-                    {
-                        "taskType": "TEXT_IMAGE",
-                        "textToImageParams": {"text": prompt},
-                        "imageGenerationConfig": {
-                            "numberOfImages": num_images,
-                            "quality": quality,
-                            "cfgScale": cfg_scale,
-                            "height": height,
-                            "width": width,
-                            "seed": seed,
-                        },
-                    },
-                    ensure_ascii=False,
-                )
+        request = json.dumps(
+            {
+                "taskType": "TEXT_IMAGE",
+                "textToImageParams": {"text": prompt},
+                "imageGenerationConfig": {
+                    "numberOfImages": num_images,
+                    "quality": quality,
+                    "cfgScale": cfg_scale,
+                    "height": height,
+                    "width": width,
+                    "seed": seed,
+                },
+            },
+            ensure_ascii=False,
+        )
 
-                response = bedrock_runtime_client.invoke_model(
-                    modelId="amazon.titan-image-generator-v1", body=request
-                )
+        response = bedrock_runtime_client.invoke_model(
+            modelId="amazon.titan-image-generator-v1", body=request
+        )
 
-                response_body = json.loads(response["body"].read())
-                # base64_image_data = response_body["images"][0]
-                images = [
-                    np.array(Image.open(BytesIO(base64.b64decode(base64_image))))
-                    for base64_image in response_body.get("images")
-                ]
-                images = [
-                    torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
-                    for image in images
-                ]
-                if len(images) == 1:
-                    images = images[0]
-                else:
-                    images = torch.cat(images, 0)
-                return (images,)
-
-            except Exception as e:
-                if retry == MAX_RETRY - 1:
-                    raise RuntimeError(f"Couldn't invoke Bedrock model: {e}")
+        response_body = json.loads(response["body"].read())
+        # base64_image_data = response_body["images"][0]
+        images = [
+            np.array(Image.open(BytesIO(base64.b64decode(base64_image))))
+            for base64_image in response_body.get("images")
+        ]
+        images = [
+            torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
+            for image in images
+        ]
+        if len(images) == 1:
+            images = images[0]
+        else:
+            images = torch.cat(images, 0)
+        return (images,)
 
 
 class BedrockSDXL:
@@ -334,53 +306,48 @@ class BedrockSDXL:
     FUNCTION = "forward"
     CATEGORY = "aws"
 
+    @retry(tries=MAX_RETRY)
     def forward(self, prompt, resolution, style_preset, cfg_scale, steps, clip_guidance_preset, sampler, seed):
 
         height, width = map(int, re.findall(r'\d+', resolution))
 
-        for retry in range(MAX_RETRY):
-            try:
-                # The different model providers have individual request and response formats.
-                # For the format, ranges, and available style_presets of Stable Diffusion models refer to:
-                # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-stability-diffusion.html
+        # The different model providers have individual request and response formats.
+        # For the format, ranges, and available style_presets of Stable Diffusion models refer to:
+        # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-stability-diffusion.html
 
-                request = {
-                    "text_prompts": [{"text": prompt}],
-                    "seed": seed,
-                    "cfg_scale": cfg_scale,
-                    "steps": steps,
-                    "height": height,
-                    "width": width,
-                    "clip_guidance_preset": clip_guidance_preset,
-                    "seed": seed,
-                }
-                if style_preset != "None":
-                    request["style_prompts"] = style_preset
-                if sampler != "Auto":
-                    request["sampler"] = sampler
+        request = {
+            "text_prompts": [{"text": prompt}],
+            "seed": seed,
+            "cfg_scale": cfg_scale,
+            "steps": steps,
+            "height": height,
+            "width": width,
+            "clip_guidance_preset": clip_guidance_preset,
+            "seed": seed,
+        }
+        if style_preset != "None":
+            request["style_prompts"] = style_preset
+        if sampler != "Auto":
+            request["sampler"] = sampler
 
-                response = bedrock_runtime_client.invoke_model(
-                    modelId="stability.stable-diffusion-xl-v1", body=json.dumps(request, ensure_ascii=False)
-                )
+        response = bedrock_runtime_client.invoke_model(
+            modelId="stability.stable-diffusion-xl-v1", body=json.dumps(request, ensure_ascii=False)
+        )
 
-                response_body = json.loads(response["body"].read())
-                images = [
-                    np.array(Image.open(BytesIO(base64.b64decode(base64_image["base64"]))))
-                    for base64_image in response_body.get("artifacts")
-                ]
-                images = [
-                    torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
-                    for image in images
-                ]
-                if len(images) == 1:
-                    images = images[0]
-                else:
-                    images = torch.cat(images, 0)
-                return (images,)
-
-            except Exception as e:
-                if retry == MAX_RETRY - 1:
-                    raise RuntimeError(f"Couldn't invoke Bedrock model: {e}")
+        response_body = json.loads(response["body"].read())
+        images = [
+            np.array(Image.open(BytesIO(base64.b64decode(base64_image["base64"]))))
+            for base64_image in response_body.get("artifacts")
+        ]
+        images = [
+            torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
+            for image in images
+        ]
+        if len(images) == 1:
+            images = images[0]
+        else:
+            images = torch.cat(images, 0)
+        return (images,)
 
 
 NODE_CLASS_MAPPINGS = {
@@ -388,4 +355,3 @@ NODE_CLASS_MAPPINGS = {
     "Bedrock - Titan Image": BedrockTitanImage,
     "Bedrock - SDXL": BedrockSDXL,
 }
-print(NODE_CLASS_MAPPINGS)

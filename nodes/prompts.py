@@ -43,4 +43,3 @@ NODE_CLASS_MAPPINGS = {
     "Prompt Template": PromptTemplate,
     "Prompt Regex Remove": PromptRegexRemove,
 }
-print(NODE_CLASS_MAPPINGS)
