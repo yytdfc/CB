@@ -130,15 +130,3 @@ NODE_CLASS_MAPPINGS = {
     "Image From S3": ImageFromS3,
     "Image To S3": ImageToS3,
 }
-
-
-if __name__ == "__main__":
-    ImageToS3()
-    
-    import imgcat
-    img = ImageFromURL().forward("https://singlefiles.s3.us-west-2.amazonaws.com/shares/1.png")
-    imgcat.imgcat(img[0].numpy()[0])
-    img = ImageFromURL().forward("s3://singlefiles/shares/1.png")
-    imgcat.imgcat(img[0].numpy()[0])
-    img = ImageFromURL().forward("https://du7u4d2q1sjz6.cloudfront.net/1.png")
-    imgcat.imgcat(img[0].numpy()[0])
