@@ -83,16 +83,18 @@ If you haven't set the default region and running on aws instance, this nodes wi
 
 ## Example
 
+Workflow examples are in `./workflows`
+
 ### prompts refine and translate
 
 You can use the Bedrock LLM to refine the prompt input and get a better result. Here is an example of doing prompt translation and refinement, and the invoke the image generation model (eg. SDXL, Titan Image) provided by Bedrock.
-The result is much better after preprocessing of prompt compared to the original SDXL model (the bottom output in figure) which doesn't have the capability of understanding Chinese. Workflow examples are in `./workflows`.
+The result is much better after preprocessing of prompt compared to the original SDXL model (the bottom output in figure) which doesn't have the capability of understanding Chinese.
 
 ![](./assets/example_prompts_refine.webp)
 
 ### Image Caption with Claude 3
 
-You can use Claude 3 multimodal to caption image
+You can use Claude 3 multimodal to caption image:
 
 ![](./assets/example_claude3_multimodal.webp)
 
