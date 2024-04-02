@@ -25,21 +25,17 @@ class BedrockClaude:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True}),
-                "is_raw_prompt": (
-                    [
-                        False,
-                        True,
-                    ],
-                ),
                 "model_id": (
                     [
+                        "anthropic.claude-3-haiku-20240307-v1:0",
+                        "anthropic.claude-3-sonnet-20240229-v1:0",
                         "anthropic.claude-v2:1",
                         "anthropic.claude-v2",
                         "anthropic.claude-v1",
                         "anthropic.claude-instant-v1",
                     ],
                 ),
-                "max_tokens_to_sample": (
+                "max_tokens": (
                     "INT",
                     {
                         "default": 200,
@@ -93,9 +89,8 @@ class BedrockClaude:
     def forward(
         self,
         prompt,
-        is_raw_prompt,
         model_id,
-        max_tokens_to_sample,
+        max_tokens,
         temperature,
         top_p,
         top_k,
@@ -107,36 +102,36 @@ class BedrockClaude:
         :param prompt: The prompt that you want Claude to complete.
         :return: Inference response from the model.
         """
-        if not is_raw_prompt:
-            enclosed_prompt = "Human: " + prompt + "\n\nAssistant:"
-        elif not prompt.strip().startswith("Human: "):
-            enclosed_prompt = "Human: " + prompt + "\n\nAssistant:"
-        else:
-            enclosed_prompt = prompt
 
         # The different model providers have individual request and response formats.
         # For the format, ranges, and default values for Anthropic Claude, refer to:
-        # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-claude.html
+        # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-anthropic-claude-messages.html
 
-        # Claude requires you to enclose the prompt as follows:
-
-        body = {
-            "prompt": enclosed_prompt,
-            "max_tokens_to_sample": max_tokens_to_sample,
+        body = json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": max_tokens,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt,
+                        }
+                    ],
+                }
+            ],
             "temperature": temperature,
             "top_p": top_p,
             "top_k": top_k,
-            # "stop_sequences": ["\n\nHuman:"],
-        }
+        }, ensure_ascii=False)
 
         response = bedrock_runtime_client.invoke_model(
-            modelId=model_id, body=json.dumps(body, ensure_ascii=False)
+            body=body, modelId=model_id,
         )
+        message = json.loads(response.get('body').read())["content"][0]["text"]
 
-        response_body = json.loads(response["body"].read())
-        completion = response_body["completion"]
-
-        return (completion,)
+        return (message,)
 
 
 class BedrockTitanImage:
