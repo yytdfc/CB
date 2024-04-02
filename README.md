@@ -1,6 +1,8 @@
 # Amazon Bedrock nodes for ComfyUI
 
-[__*Amazon Bedrock*__](https://aws.amazon.com/bedrock/) is a fully managed service that offers a choice of high-performing foundation models (FMs) from leading AI companies.
+__*News:*__ Bedrock nodes now support __*Claude3 haiku sonnet*__, also support multimodal for image caption
+
+[***Amazon Bedrock***](https://aws.amazon.com/bedrock/) is a fully managed service that offers a choice of high-performing foundation models (FMs) from leading AI companies.
 This repo is the ComfyUI nodes for Bedrock service. You can invoke foundation models in your ComfyUI pipeline.
 
 ## Installation (SageMaker by CloudFormation)
@@ -8,18 +10,16 @@ This repo is the ComfyUI nodes for Bedrock service. You can invoke foundation mo
 Using [__*Amazon SageMaker*__](https://aws.amazon.com/sagemaker/) is the easiest way to develop your AI model. You can deploy a ComfyUI on SageMaker notebook using CloudFormation.
 
 1. Open [CloudFormation console](https://console.aws.amazon.com/cloudformation/home#/stacks/create), and upload [`./assets/comfyui_on_sagemaker.yaml`](https://raw.githubusercontent.com/yytdfc/ComfyUI-Bedrock/main/assets/comfyui_on_sagemaker.yaml) by "Upload a template file".
-
 2. Next enter a stack name, choose a instance type fits for you.  Just next and next and submit.
-
 3. Wait for a moment, and you will find the ComfyUI url is ready for you. Enjoy!
 
 ![](./assets/stack_complete.webp)
 
-
 ## Installation (Manually)
+
 1. Clone this repository to your ComfyUI `custom_nodes` directory:
 
-``` bash
+```bash
 pip install -r requirements.txt
 cd ComfyUI/custom_nodes
 git clone https://github.com/yytdfc/ComfyUI-Bedrock.git
@@ -33,7 +33,6 @@ git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git
 
 ![](./assets/model_access.webp)
 
-
 3. You need configure credential for your environments with IAM Role or AKSK.
 
 - IAM Role
@@ -44,7 +43,7 @@ Open the IAM role console of your running instance, and attach `AmazonBedrockFul
 
 Alternatively, you can create an inline policy to your role like this:
 
-``` json
+```json
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -56,7 +55,6 @@ Alternatively, you can create an inline policy to your role like this:
     ]
 }
 ```
-
 
 - AKSK (AccessKeySecretKey)
 
@@ -83,34 +81,39 @@ region=us-east-1
 
 If you haven't set the default region and running on aws instance, this nodes will automatically use the same region as the running instance.
 
-
 ## Example
 
-For example, you can use the Bedrock LLM to refine the prompt input and get a better result. Here is an example of doing prompt translation and refinement, and the invoke the image generation model (eg. SDXL, Titan Image) provided by Bedrock.
+### prompts refine and translate
+
+You can use the Bedrock LLM to refine the prompt input and get a better result. Here is an example of doing prompt translation and refinement, and the invoke the image generation model (eg. SDXL, Titan Image) provided by Bedrock.
 The result is much better after preprocessing of prompt compared to the original SDXL model (the bottom output in figure) which doesn't have the capability of understanding Chinese. Workflow examples are in `./workflows`.
 
-![](./assets/example.webp)
+![](./assets/example_prompts_refine.webp)
 
+### Image Caption with Claude 3
 
+You can use Claude 3 multimodal to caption image
+
+![](./assets/example_claude3_multimodal.webp)
 
 ## Support models:
 
 Here are models ready for use, more models are coming soon.
 
 - Anthropic:
-    - [x] Claude (1.x, 2.0, 2.1)
-    - [x] Claude Instant (1.x)
 
+  - [X] Claude (1.x, 2.0, 2.1, haiku, sonnet)
+  - [X] Claude Instant (1.x)
 - Amazon:
-    - Titan Image Generator G1 (1.x)
-        - [x] text to image
-        - [ ] inpainting
-        - [ ] outpainting
-        - [ ] image variation
 
-
+  - Titan Image Generator G1 (1.x)
+    - [X] text to image
+    - [ ] inpainting
+    - [ ] outpainting
+    - [ ] image variation
 - Stability AI:
-    - Stable Diffusion XL (1.0)
-        - [x] text to image
-        - [ ] image to image
-        - [ ] image to image (masking)
+
+  - Stable Diffusion XL (1.0)
+    - [X] text to image
+    - [ ] image to image
+    - [ ] image to image (masking)

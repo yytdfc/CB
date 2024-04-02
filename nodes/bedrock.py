@@ -15,8 +15,148 @@ from .session import get_client
 
 MAX_RETRY = 3
 
+CLAUDE3_MAX_SIZE = 1568
 
 bedrock_runtime_client = get_client(service_name="bedrock-runtime")
+
+
+class BedrockClaudeMultimodal:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "prompt": ("STRING", {"multiline": True}),
+                "model_id": (
+                    [
+                        "anthropic.claude-3-haiku-20240307-v1:0",
+                        "anthropic.claude-3-sonnet-20240229-v1:0",
+                    ],
+                ),
+                "max_tokens": (
+                    "INT",
+                    {
+                        "default": 2048,
+                        "min": 0,  # Minimum value
+                        "max": 4096,  # Maximum value
+                        "step": 1,  # Slider's step
+                        "display": "number",  # Cosmetic only: display as "number" or "slider"
+                    },
+                ),
+                "temperature": (
+                    "FLOAT",
+                    {
+                        "default": 0.5,
+                        "min": 0.0,
+                        "max": 1.0,
+                        "step": 0.1,
+                        "round": 0.001,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "slider",
+                    },
+                ),
+                "top_p": (
+                    "FLOAT",
+                    {
+                        "default": 1.0,
+                        "min": 0.0,
+                        "max": 1.0,
+                        "step": 0.1,
+                        "round": 0.001,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "slider",
+                    },
+                ),
+                "top_k": (
+                    "INT",
+                    {
+                        "default": 250,
+                        "min": 0,
+                        "max": 500,
+                        "step": 1,
+                        "round": 1,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "slider",
+                    },
+                ),
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "forward"
+    CATEGORY = "aws"
+
+    @retry(tries=MAX_RETRY)
+    def forward(
+        self,
+        image,
+        prompt,
+        model_id,
+        max_tokens,
+        temperature,
+        top_p,
+        top_k,
+    ):
+        """
+        Invokes the Anthropic Claude model to run an inference using the input
+        provided in the request body.
+
+        :param prompt: The prompt that you want Claude to complete.
+        :return: Inference response from the model.
+        """
+
+        image = image[0] * 255.0
+        image = Image.fromarray(image.clamp(0, 255).numpy().round().astype(np.uint8))
+
+        width, height = image.size
+        max_size = max(width, height)
+        if max_size > CLAUDE3_MAX_SIZE:
+            width = round(width * CLAUDE3_MAX_SIZE / max_size )
+            height = round(height * CLAUDE3_MAX_SIZE / max_size )
+            image = image.resize((width, height))
+
+        buffer = BytesIO()
+        image.save(buffer, format="webp", quality=80)
+        image_data = buffer.getvalue()
+
+        image_base64 = base64.b64encode(image_data).decode("utf-8")
+
+
+        # The different model providers have individual request and response formats.
+        # For the format, ranges, and default values for Anthropic Claude, refer to:
+        # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-anthropic-claude-messages.html
+
+        body = json.dumps({
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": max_tokens,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": "image/webp",
+                                "data": image_base64,
+                            },
+                        },
+                        {
+                            "type": "text",
+                            "text": prompt,
+                        }
+                    ],
+                }
+            ],
+            "temperature": temperature,
+            "top_p": top_p,
+            "top_k": top_k,
+        }, ensure_ascii=False)
+
+        response = bedrock_runtime_client.invoke_model(
+            body=body, modelId=model_id,
+        )
+        message = json.loads(response.get('body').read())["content"][0]["text"]
+
+        return (message,)
+
 
 
 class BedrockClaude:
@@ -38,7 +178,7 @@ class BedrockClaude:
                 "max_tokens": (
                     "INT",
                     {
-                        "default": 200,
+                        "default": 2048,
                         "min": 0,  # Minimum value
                         "max": 4096,  # Maximum value
                         "step": 1,  # Slider's step
@@ -96,7 +236,7 @@ class BedrockClaude:
         top_k,
     ):
         """
-        Invokes the Anthropic Claude 2 model to run an inference using the input
+        Invokes the Anthropic Claude model to run an inference using the input
         provided in the request body.
 
         :param prompt: The prompt that you want Claude to complete.
@@ -431,6 +571,7 @@ class BedrockSDXL:
 
 NODE_CLASS_MAPPINGS = {
     "Bedrock - Claude": BedrockClaude,
+    "Bedrock - Claude Multimodal": BedrockClaudeMultimodal,
     "Bedrock - Titan Image": BedrockTitanImage,
     "Bedrock - SDXL": BedrockSDXL,
 }
