@@ -16,7 +16,7 @@ from .session import get_client
 MAX_RETRY = 3
 
 
-bedrock_runtime_client = get_client(service_name='bedrock-runtime')
+bedrock_runtime_client = get_client(service_name="bedrock-runtime")
 
 
 class BedrockClaude:
@@ -25,56 +25,81 @@ class BedrockClaude:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True}),
-                "is_raw_prompt": ([
-                    False,
-                    True, 
-                ],),
-                "model_id": ([
-                    "anthropic.claude-v2:1", 
-                    "anthropic.claude-v2",
-                    "anthropic.claude-v1",
-                    "anthropic.claude-instant-v1",
-                ],),
-                "max_tokens_to_sample": ("INT", {
-                    "default": 200, 
-                    "min": 0, #Minimum value
-                    "max": 4096, #Maximum value
-                    "step": 1, #Slider's step
-                    "display": "number" # Cosmetic only: display as "number" or "slider"
-                }),
-                "temperature": ("FLOAT", {
-                    "default": 0.5,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "step": 0.1,
-                    "round": 0.001, #The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
-                    "display": "slider"
-                }),
-                "top_p": ("FLOAT", {
-                    "default": 1.0,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "step": 0.1,
-                    "round": 0.001, #The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
-                    "display": "slider"
-                }),
-                "top_k": ("INT", {
-                    "default": 250,
-                    "min": 0,
-                    "max": 500,
-                    "step": 1,
-                    "round": 1, #The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
-                    "display": "slider"
-                }),
+                "is_raw_prompt": (
+                    [
+                        False,
+                        True,
+                    ],
+                ),
+                "model_id": (
+                    [
+                        "anthropic.claude-v2:1",
+                        "anthropic.claude-v2",
+                        "anthropic.claude-v1",
+                        "anthropic.claude-instant-v1",
+                    ],
+                ),
+                "max_tokens_to_sample": (
+                    "INT",
+                    {
+                        "default": 200,
+                        "min": 0,  # Minimum value
+                        "max": 4096,  # Maximum value
+                        "step": 1,  # Slider's step
+                        "display": "number",  # Cosmetic only: display as "number" or "slider"
+                    },
+                ),
+                "temperature": (
+                    "FLOAT",
+                    {
+                        "default": 0.5,
+                        "min": 0.0,
+                        "max": 1.0,
+                        "step": 0.1,
+                        "round": 0.001,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "slider",
+                    },
+                ),
+                "top_p": (
+                    "FLOAT",
+                    {
+                        "default": 1.0,
+                        "min": 0.0,
+                        "max": 1.0,
+                        "step": 0.1,
+                        "round": 0.001,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "slider",
+                    },
+                ),
+                "top_k": (
+                    "INT",
+                    {
+                        "default": 250,
+                        "min": 0,
+                        "max": 500,
+                        "step": 1,
+                        "round": 1,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "slider",
+                    },
+                ),
             }
         }
-    
+
     RETURN_TYPES = ("STRING",)
     FUNCTION = "forward"
     CATEGORY = "aws"
 
     @retry(tries=MAX_RETRY)
-    def forward(self, prompt, is_raw_prompt, model_id, max_tokens_to_sample, temperature, top_p, top_k):
+    def forward(
+        self,
+        prompt,
+        is_raw_prompt,
+        model_id,
+        max_tokens_to_sample,
+        temperature,
+        top_p,
+        top_k,
+    ):
         """
         Invokes the Anthropic Claude 2 model to run an inference using the input
         provided in the request body.
@@ -111,7 +136,7 @@ class BedrockClaude:
         response_body = json.loads(response["body"].read())
         completion = response_body["completion"]
 
-        return (completion, )
+        return (completion,)
 
 
 class BedrockTitanImage:
@@ -120,64 +145,77 @@ class BedrockTitanImage:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True}),
-                "num_images": ("INT", {
-                    "default": 1,
-                    "min": 1,
-                    "max": 5,
-                    "step": 1,
-                    "round": 1, #The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
-                    "display": "number"
-                }),
-                "quality": ([
-                    "standard",
-                    "premium",
-                ],),
-                "resolution": ([
-                    "1024 x 1024",
-                    "768 x 768",
-                    "512 x 512",
-                    "768 x 1152",
-                    "384 x 576",
-                    "1152 x 768",
-                    "576 x 384",
-                    "768 x 1280",
-                    "384 x 640",
-                    "1280 x 768",
-                    "640 x 384",
-                    "896 x 1152",
-                    "448 x 576",
-                    "1152 x 896",
-                    "576 x 448",
-                    "768 x 1408",
-                    "384 x 704",
-                    "1408 x 768",
-                    "704 x 384",
-                    "640 x 1408",
-                    "320 x 704",
-                    "1408 x 640",
-                    "704 x 320",
-                    "1152 x 640",
-                    "1173 x 640",
-                ],),
-                "cfg_scale": ("FLOAT", {
-                    "default": 7.0,
-                    "min": 0.0,
-                    "max": 35.0,
-                    "step": 0.1,
-                    "round": 0.001, #The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
-                    "display": "slider"
-                }),
-                "seed": ("INT", {
-                    "default": 0,
-                    "min": 0,
-                    "max": 2147483646,
-                    "step": 1,
-                    "round": 1, #The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
-                    "display": "number"
-                }),
+                "num_images": (
+                    "INT",
+                    {
+                        "default": 1,
+                        "min": 1,
+                        "max": 5,
+                        "step": 1,
+                        "round": 1,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "number",
+                    },
+                ),
+                "quality": (
+                    [
+                        "standard",
+                        "premium",
+                    ],
+                ),
+                "resolution": (
+                    [
+                        "1024 x 1024",
+                        "768 x 768",
+                        "512 x 512",
+                        "768 x 1152",
+                        "384 x 576",
+                        "1152 x 768",
+                        "576 x 384",
+                        "768 x 1280",
+                        "384 x 640",
+                        "1280 x 768",
+                        "640 x 384",
+                        "896 x 1152",
+                        "448 x 576",
+                        "1152 x 896",
+                        "576 x 448",
+                        "768 x 1408",
+                        "384 x 704",
+                        "1408 x 768",
+                        "704 x 384",
+                        "640 x 1408",
+                        "320 x 704",
+                        "1408 x 640",
+                        "704 x 320",
+                        "1152 x 640",
+                        "1173 x 640",
+                    ],
+                ),
+                "cfg_scale": (
+                    "FLOAT",
+                    {
+                        "default": 7.0,
+                        "min": 0.0,
+                        "max": 35.0,
+                        "step": 0.1,
+                        "round": 0.001,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "slider",
+                    },
+                ),
+                "seed": (
+                    "INT",
+                    {
+                        "default": 0,
+                        "min": 0,
+                        "max": 2147483646,
+                        "step": 1,
+                        "round": 1,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "number",
+                    },
+                ),
             }
         }
-    
+
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "forward"
     CATEGORY = "aws"
@@ -192,7 +230,7 @@ class BedrockTitanImage:
         :return: Base64-encoded inference response from the model.
         """
 
-        height, width = map(int, re.findall(r'\d+', resolution))
+        height, width = map(int, re.findall(r"\d+", resolution))
 
         # The different model providers have individual request and response formats.
         # For the format, ranges, and default values for Titan Image models refer to:
@@ -241,75 +279,120 @@ class BedrockSDXL:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True}),
-                "resolution": ([
-                    "1024 x 1024",
-                    "1152 x 896",
-                    "1216 x 832",
-                    "1344 x 768",
-                    "1536 x 640",
-                    "640 x 1536",
-                    "768 x 1344",
-                    "832 x 1216",
-                    "896 x 1152",
-                ],),
-                "style_preset": ([
-                    "None",
-                    "3d-model", "analog-film", "anime", "cinematic", "comic-book", "digital-art", 
-                    "enhance", "fantasy-art", "isometric", "line-art", "low-poly", "modeling-compound", 
-                    "neon-punk", "origami", "photographic", "pixel-art", "tile-texture",
-                ],),
-                "cfg_scale": ("FLOAT", {
-                    "default": 8.0,
-                    "min": 1.1,
-                    "max": 10.0,
-                    "step": 0.1,
-                    "round": 0.001, #The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
-                    "display": "slider"
-                }),
-                "steps": ("INT", {
-                    "default": 30,
-                    "min": 10,
-                    "max": 50,
-                    "step": 1,
-                    "round": 1, #The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
-                    "display": "number"
-                }),
-                "clip_guidance_preset": ([
-                    "NONE", "FAST_BLUE", "FAST_GREEN", "SIMPLE", 
-                    "SLOW", "SLOWER", "SLOWEST",
-                ],),
-                "sampler": ([
-                    "Auto",
-                    "DDIM",
-                    "DDPM",
-                    "K_DPMPP_2M",
-                    "K_DPMPP_2S_ANCESTRAL",
-                    "K_DPM_2",
-                    "K_DPM_2_ANCESTRAL",
-                    "K_EULER",
-                    "K_EULER_ANCESTRAL",
-                    "K_HEUN",
-                    "K_LMS",
-                ],),
-                "seed": ("INT", {
-                    "default": 0,
-                    "min": 0,
-                    "max": 4294967295,
-                    "step": 1,
-                    "round": 1, #The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
-                    "display": "number"
-                }),
+                "resolution": (
+                    [
+                        "1024 x 1024",
+                        "1152 x 896",
+                        "1216 x 832",
+                        "1344 x 768",
+                        "1536 x 640",
+                        "640 x 1536",
+                        "768 x 1344",
+                        "832 x 1216",
+                        "896 x 1152",
+                    ],
+                ),
+                "style_preset": (
+                    [
+                        "None",
+                        "3d-model",
+                        "analog-film",
+                        "anime",
+                        "cinematic",
+                        "comic-book",
+                        "digital-art",
+                        "enhance",
+                        "fantasy-art",
+                        "isometric",
+                        "line-art",
+                        "low-poly",
+                        "modeling-compound",
+                        "neon-punk",
+                        "origami",
+                        "photographic",
+                        "pixel-art",
+                        "tile-texture",
+                    ],
+                ),
+                "cfg_scale": (
+                    "FLOAT",
+                    {
+                        "default": 8.0,
+                        "min": 1.1,
+                        "max": 10.0,
+                        "step": 0.1,
+                        "round": 0.001,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "slider",
+                    },
+                ),
+                "steps": (
+                    "INT",
+                    {
+                        "default": 30,
+                        "min": 10,
+                        "max": 50,
+                        "step": 1,
+                        "round": 1,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "number",
+                    },
+                ),
+                "clip_guidance_preset": (
+                    [
+                        "NONE",
+                        "FAST_BLUE",
+                        "FAST_GREEN",
+                        "SIMPLE",
+                        "SLOW",
+                        "SLOWER",
+                        "SLOWEST",
+                    ],
+                ),
+                "sampler": (
+                    [
+                        "Auto",
+                        "DDIM",
+                        "DDPM",
+                        "K_DPMPP_2M",
+                        "K_DPMPP_2S_ANCESTRAL",
+                        "K_DPM_2",
+                        "K_DPM_2_ANCESTRAL",
+                        "K_EULER",
+                        "K_EULER_ANCESTRAL",
+                        "K_HEUN",
+                        "K_LMS",
+                    ],
+                ),
+                "seed": (
+                    "INT",
+                    {
+                        "default": 0,
+                        "min": 0,
+                        "max": 4294967295,
+                        "step": 1,
+                        "round": 1,  # The value represeting the precision to round to, will be set to the step value by default. Can be set to False to disable rounding.
+                        "display": "number",
+                    },
+                ),
             }
         }
-    
+
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "forward"
     CATEGORY = "aws"
 
     @retry(tries=MAX_RETRY)
-    def forward(self, prompt, resolution, style_preset, cfg_scale, steps, clip_guidance_preset, sampler, seed):
-
-        height, width = map(int, re.findall(r'\d+', resolution))
+    def forward(
+        self,
+        prompt,
+        resolution,
+        style_preset,
+        cfg_scale,
+        steps,
+        clip_guidance_preset,
+        sampler,
+        seed,
+    ):
+        height, width = map(int, re.findall(r"\d+", resolution))
 
         # The different model providers have individual request and response formats.
         # For the format, ranges, and available style_presets of Stable Diffusion models refer to:
@@ -331,7 +414,8 @@ class BedrockSDXL:
             request["sampler"] = sampler
 
         response = bedrock_runtime_client.invoke_model(
-            modelId="stability.stable-diffusion-xl-v1", body=json.dumps(request, ensure_ascii=False)
+            modelId="stability.stable-diffusion-xl-v1",
+            body=json.dumps(request, ensure_ascii=False),
         )
 
         response_body = json.loads(response["body"].read())

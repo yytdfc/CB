@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+
 here = Path(__file__).parent.resolve()
 #  sys.path.append(str(Path(here, "nodes")))
 import traceback
@@ -21,7 +22,9 @@ def load_nodes():
             )
             node_class_mappings.update(getattr(module, "NODE_CLASS_MAPPINGS"))
             if hasattr(module, "NODE_DISPLAY_NAME_MAPPINGS"):
-                node_display_name_mappings.update(getattr(module, "NODE_DISPLAY_NAME_MAPPINGS"))
+                node_display_name_mappings.update(
+                    getattr(module, "NODE_DISPLAY_NAME_MAPPINGS")
+                )
 
         except AttributeError:
             pass  # wip nodes
@@ -40,6 +43,7 @@ def load_nodes():
             + "If you think this is a bug, please report it on the github page (https://github.com/Fannovel16/comfyui_controlnet_aux/issues)"
         )
     return node_class_mappings, node_display_name_mappings
+
 
 NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS = load_nodes()
 print("ComfyUI-Bedrock loaded:\n  ", list(NODE_CLASS_MAPPINGS.keys()))

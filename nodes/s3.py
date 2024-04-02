@@ -17,7 +17,7 @@ import torch
 from .session import get_client
 
 
-s3_client = get_client(service_name='s3')
+s3_client = get_client(service_name="s3")
 
 MAX_RETRY = 3
 
@@ -27,24 +27,28 @@ class ImageFromURL:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "url": ("STRING",{"multiline": False}),
+                "url": ("STRING", {"multiline": False}),
             }
         }
-    
+
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "forward"
     CATEGORY = "aws"
 
     def download_s3(self, bucket, key):
         response = s3_client.get_object(Bucket=bucket, Key=key)
-        image = Image.open(response['Body'])
-        image = torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
+        image = Image.open(response["Body"])
+        image = torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(
+            0
+        )
         return image
 
     def download_http(self, url):
         request = requests.get(url)
         image = Image.open(BytesIO(request.content))
-        image = torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
+        image = torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(
+            0
+        )
         return image
 
     @retry(tries=MAX_RETRY)
@@ -52,7 +56,7 @@ class ImageFromURL:
         if url.startswith("s3://"):
             bucket, key = url.split("s3://")[1].split("/", 1)
             image = self.download_s3(bucket, key)
-        elif re.match(r'^https://.*\.s3\..*\.amazonaws\.com/.*', url):
+        elif re.match(r"^https://.*\.s3\..*\.amazonaws\.com/.*", url):
             _, _, bucket, key = url.split("/", 3)
             bucket = bucket.split(".")[0]
             image = self.download_s3(bucket, key)
@@ -68,21 +72,21 @@ class ImageFromS3:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "bucket": (
-                    [b["Name"] for b in s3_client.list_buckets()['Buckets']],
-                ),
-                "key": ("STRING",{"multiline": False}),
+                "bucket": ([b["Name"] for b in s3_client.list_buckets()["Buckets"]],),
+                "key": ("STRING", {"multiline": False}),
             }
         }
-    
+
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "forward"
     CATEGORY = "aws"
 
     def download_s3(self, bucket, key):
         response = s3_client.get_object(Bucket=bucket, Key=key)
-        image = Image.open(response['Body'])
-        image = torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
+        image = Image.open(response["Body"])
+        image = torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(
+            0
+        )
         return image
 
     @retry(tries=MAX_RETRY)
@@ -92,19 +96,16 @@ class ImageFromS3:
 
 
 class ImageToS3:
-
     @classmethod
     def INPUT_TYPES(s):
         return {
             "required": {
                 "image": ("IMAGE",),
-                "bucket": (
-                    [b["Name"] for b in s3_client.list_buckets()['Buckets']],
-                ),
-                "key": ("STRING",{"multiline": False}),
+                "bucket": ([b["Name"] for b in s3_client.list_buckets()["Buckets"]],),
+                "key": ("STRING", {"multiline": False}),
             }
         }
-    
+
     RETURN_TYPES = ("STRING",)
     FUNCTION = "forward"
     CATEGORY = "aws"
@@ -116,8 +117,12 @@ class ImageToS3:
         buffer = BytesIO()
         image.save(buffer, format=key.split(".")[-1])
         buffer.seek(0)
-        s3_client.put_object(Bucket=bucket, Key=key, Body=buffer,
-                             ContentType=f"image/{key.split('.')[-1].lower()}")
+        s3_client.put_object(
+            Bucket=bucket,
+            Key=key,
+            Body=buffer,
+            ContentType=f"image/{key.split('.')[-1].lower()}",
+        )
 
     @retry(tries=MAX_RETRY)
     def forward(self, image, bucket, key):

@@ -10,6 +10,7 @@ class PromptTemplate:
                 "prompt_template": ("STRING", {"multiline": True}),
             }
         }
+
     RETURN_TYPES = ("STRING",)
     FUNCTION = "forward"
 
@@ -29,6 +30,7 @@ class PromptRegexRemove:
                 "regex_string": ("STRING", {"multiline": True}),
             }
         }
+
     RETURN_TYPES = ("STRING",)
     FUNCTION = "replace"
 
