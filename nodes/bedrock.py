@@ -31,6 +31,7 @@ class BedrockClaudeMultimodal:
                     [
                         "anthropic.claude-3-haiku-20240307-v1:0",
                         "anthropic.claude-3-sonnet-20240229-v1:0",
+                        "anthropic.claude-3-opus-20240229-v1:0",
                     ],
                 ),
                 "max_tokens": (
@@ -108,8 +109,8 @@ class BedrockClaudeMultimodal:
         width, height = image.size
         max_size = max(width, height)
         if max_size > CLAUDE3_MAX_SIZE:
-            width = round(width * CLAUDE3_MAX_SIZE / max_size )
-            height = round(height * CLAUDE3_MAX_SIZE / max_size )
+            width = round(width * CLAUDE3_MAX_SIZE / max_size)
+            height = round(height * CLAUDE3_MAX_SIZE / max_size)
             image = image.resize((width, height))
 
         buffer = BytesIO()
@@ -118,45 +119,47 @@ class BedrockClaudeMultimodal:
 
         image_base64 = base64.b64encode(image_data).decode("utf-8")
 
-
         # The different model providers have individual request and response formats.
         # For the format, ranges, and default values for Anthropic Claude, refer to:
         # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-anthropic-claude-messages.html
 
-        body = json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": max_tokens,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": "image/webp",
-                                "data": image_base64,
+        body = json.dumps(
+            {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": max_tokens,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": "image/webp",
+                                    "data": image_base64,
+                                },
                             },
-                        },
-                        {
-                            "type": "text",
-                            "text": prompt,
-                        }
-                    ],
-                }
-            ],
-            "temperature": temperature,
-            "top_p": top_p,
-            "top_k": top_k,
-        }, ensure_ascii=False)
+                            {
+                                "type": "text",
+                                "text": prompt,
+                            },
+                        ],
+                    }
+                ],
+                "temperature": temperature,
+                "top_p": top_p,
+                "top_k": top_k,
+            },
+            ensure_ascii=False,
+        )
 
         response = bedrock_runtime_client.invoke_model(
-            body=body, modelId=model_id,
+            body=body,
+            modelId=model_id,
         )
-        message = json.loads(response.get('body').read())["content"][0]["text"]
+        message = json.loads(response.get("body").read())["content"][0]["text"]
 
         return (message,)
-
 
 
 class BedrockClaude:
@@ -169,6 +172,7 @@ class BedrockClaude:
                     [
                         "anthropic.claude-3-haiku-20240307-v1:0",
                         "anthropic.claude-3-sonnet-20240229-v1:0",
+                        "anthropic.claude-3-opus-20240229-v1:0",
                         "anthropic.claude-v2:1",
                         "anthropic.claude-v2",
                         "anthropic.claude-v1",
@@ -247,29 +251,33 @@ class BedrockClaude:
         # For the format, ranges, and default values for Anthropic Claude, refer to:
         # https://docs.aws.amazon.com/bedrock/latest/userguide/model-parameters-anthropic-claude-messages.html
 
-        body = json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": max_tokens,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": prompt,
-                        }
-                    ],
-                }
-            ],
-            "temperature": temperature,
-            "top_p": top_p,
-            "top_k": top_k,
-        }, ensure_ascii=False)
+        body = json.dumps(
+            {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": max_tokens,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": prompt,
+                            }
+                        ],
+                    }
+                ],
+                "temperature": temperature,
+                "top_p": top_p,
+                "top_k": top_k,
+            },
+            ensure_ascii=False,
+        )
 
         response = bedrock_runtime_client.invoke_model(
-            body=body, modelId=model_id,
+            body=body,
+            modelId=model_id,
         )
-        message = json.loads(response.get('body').read())["content"][0]["text"]
+        message = json.loads(response.get("body").read())["content"][0]["text"]
 
         return (message,)
 

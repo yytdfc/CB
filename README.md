@@ -104,8 +104,9 @@ Here are models ready for use, more models are coming soon.
 
 - Anthropic:
 
-  - [X] Claude (1.x, 2.0, 2.1, haiku, sonnet)
+  - [X] Claude (1.x, 2.0, 2.1, haiku, sonnet, opus)
   - [X] Claude Instant (1.x)
+
 - Amazon:
 
   - Titan Image Generator G1 (1.x)
@@ -113,6 +114,7 @@ Here are models ready for use, more models are coming soon.
     - [ ] inpainting
     - [ ] outpainting
     - [ ] image variation
+
 - Stability AI:
 
   - Stable Diffusion XL (1.0)
